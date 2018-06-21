@@ -1,11 +1,18 @@
 package nural
 
 import (
+	"fmt"
 	"testing"
 )
 
 func testFunction(a []interface{}) interface{} {
-	return a[0]
+	r := 1
+	for _, v := range a {
+		r += v.(int)
+	}
+	fmt.Println(a)
+	fmt.Println(r)
+	return r
 }
 
 func TestNur(t *testing.T) {
@@ -25,6 +32,9 @@ func TestNur(t *testing.T) {
 	n[2].parent(&n[3])
 
 	n[3].fin(0)
+
+	<-n[0].don
+	fmt.Println("Last finished")
 	n[0].read()
 	n[1].read()
 	n[2].read()
