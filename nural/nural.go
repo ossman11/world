@@ -83,15 +83,22 @@ func (n *nur) read() {
 	fmt.Println(n.res)
 }
 
+func (n *nur) reset() {
+	n.don = make(chan bool)
+	n.run = false
+}
+
 func NewNur(op operation) *nur {
-	return &nur{
+	r := &nur{
 		op,
 		false,
-		make(chan bool),
+		nil,
 		nil,
 		[]*nur{},
 		[]*nur{},
 	}
+	r.reset()
+	return r
 }
 
 type net struct {
