@@ -1,7 +1,6 @@
 package nural
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -11,23 +10,22 @@ func testFunction(a []interface{}) interface{} {
 
 func TestNur(t *testing.T) {
 	n := []nur{
-		nur{
-			testFunction, 0,
-			make([]interface{}, 0),
-			make(chan interface{}, 2),
-			[]*nur{},
-			[]*nur{},
-		},
-		nur{
-			testFunction, 0,
-			make([]interface{}, 0),
-			make(chan interface{}, 2),
-			[]*nur{},
-			[]*nur{},
-		},
+		*NewNur(testFunction),
+		*NewNur(testFunction),
+		*NewNur(testFunction),
+		*NewNur(testFunction),
 	}
-	n[0].child(&n[1])
-	go n[0].fin(0)
-	go n[1].wait()
-	go fmt.Println(<-n[1].res)
+	n[0].parent(&n[3])
+	n[0].parent(&n[2])
+	n[0].parent(&n[1])
+
+	n[1].parent(&n[3])
+	n[1].parent(&n[2])
+
+	n[2].parent(&n[3])
+
+	n[3].fin(0)
+	n[0].read()
+	n[1].read()
+	n[2].read()
 }

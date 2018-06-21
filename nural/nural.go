@@ -1,15 +1,19 @@
 package nural
 
+import (
+	"fmt"
+)
+
 // Operation of a nuron to calculate any input to any output
 type operation func([]interface{}) interface{}
 
 type nur struct {
-	op   operation
-	valC int
-	val  []interface{}
-	res  chan interface{}
-	in   []*nur
-	out  []*nur
+	op  operation
+	run bool
+	don chan bool
+	res interface{}
+	in  []*nur
+	out []*nur
 }
 
 // Checks if the nur exists inside the slice of nurs
@@ -37,7 +41,7 @@ func (n *nur) child(c *nur) {
 	if n.isChild(c) {
 		return
 	}
-	n.out = append(n.in, c)
+	n.out = append(n.out, c)
 	c.parent(n)
 }
 
@@ -53,32 +57,40 @@ func (n *nur) parent(c *nur) {
 // Finishes a nur
 // and propegates the result to all the children
 func (n *nur) fin(v interface{}) {
-	for i := 0; i < len(n.out); i++ {
-		n.res <- v
+	n.res = v
+	for _, c := range n.out {
+		go c.exec()
 	}
-	close(n.res)
-}
-
-// Sets the val of the nur
-func (n *nur) set(i int, v interface{}) {
-	n.valC++
-	n.val[i] = v
-	if n.valC >= len(n.in) {
-		n.exec()
-	}
+	close(n.don)
 }
 
 // Executes the op of the nur
 func (n *nur) exec() {
-	n.res <- n.op(n.val)
+	if n.run {
+		return
+	}
+	n.run = true
+	val := make([]interface{}, len(n.in))
+	for i, c := range n.in {
+		<-c.don
+		val[i] = c.res
+	}
+	n.fin(n.op(val))
 }
 
-// Makes the nur wait for all its pars to be fin
-func (n *nur) wait() {
-	n.valC = 0
-	n.val = make([]interface{}, len(n.in))
-	for i, c := range n.in {
-		n.set(i, <-c.res)
+func (n *nur) read() {
+	<-n.don
+	fmt.Println(n.res)
+}
+
+func NewNur(op operation) *nur {
+	return &nur{
+		op,
+		false,
+		make(chan bool),
+		nil,
+		[]*nur{},
+		[]*nur{},
 	}
 }
 
